@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgroCalc - Recomendação de Calagem</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #2e7d32, #66bb6a);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px; 
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 480px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #2e7d32;
+            font-size: 1.8rem;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 5px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 16px; 
+            transition: 0.2s;
+            background-color: #fafafa;
+        }
+
+        input:focus, select:focus {
+            border-color: #2e7d32;
+            outline: none;
+            box-shadow: 0 0 5px rgba(46,125,50,0.4);
+            background-color: #fff;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #2e7d32;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: 0.3s;
+            margin-top: 5px;
+        }
+
+        button:hover { background: #1b5e20; }
+
+        .btn-pdf {
+            background: #388e3c;
+            border: 2px dashed rgba(255,255,255,0.3);
+            margin-top: 10px;
+        }
+
+        .btn-print {
+            background: #1565c0;
+            margin-top: 15px;
+            display: none; 
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            background: #f1f8e9;
+            border-left: 5px solid #2e7d32;
+            display: none;
+            font-size: 14px;
+        }
+
+        .loading {
+            text-align: center;
+            margin-top: 10px;
+            font-style: italic;
+            color: #fff;
+            display: none;
+        }
+
+        #print-area { display: none; }
+
+        @media print {
+            body { background: white !important; padding: 0; }
+            .container { display: none !important; }
+            #print-area { display: block !important; width: 100%; }
+            .print-header { text-align: center; border-bottom: 2px solid #2e7d32; margin-bottom: 20px; padding-bottom: 10px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+            th { background-color: #f9f9f9 !important; -webkit-print-color-adjust: exact; }
+            .print-footer { margin-top: 50px; text-align: center; font-size: 12px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>AgroCalc</h1>
+
+        <div class="form-group">
+            <label>Cálcio (Ca)</label>
+            <input id="ca" type="number" step="any" placeholder="cmolc/dm³">
+        </div>
+
+        <div class="form-group">
+            <label>Magnésio (Mg)</label>
+            <input id="mg" type="number" step="any" placeholder="cmolc/dm³">
+        </div>
+
+        <div class="form-group">
+            <label>Potássio (K)</label>
+            <input id="k" type="number" step="any" placeholder="cmolc/dm³">
+        </div>
+
+        <div class="form-group">
+            <label>Acidez Potencial (H + Al)</label>
+            <input id="hAl" type="number" step="any" placeholder="cmolc/dm³">
+        </div>
+
+        <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+
+        <div class="form-group">
+            <label>Cultura</label>
+            <select id="cultura">
+                <option value="soja">Soja V2 60%</option>
+                <option value="milho">Milho V2 70%</option>
+                <option value="trigo">Trigo V2 70%</option>
+                <option value="cafe">Café V2 70%</option>
+                <option value="pastagem">Pastagem V2 50%</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="tipoCalcario">Tipo de Calcário (PRNT médio):</label>
+            <select id="tipoCalcario" class="form-control" onchange="atualizarPRNT()">
+                <option value="80">Calcítico (PRNT 80%)</option>
+                <option value="85">Magnesiano (PRNT 85%)</option>
+                <option value="90">Dolomítico (PRNT 90%)</option>
+                <option value="100">Filler (PRNT 100%)</option>
+                <option value="custom">Outro (Informar manualmente)</option>
+            </select>
+        </div>
+
+        <div class="form-group" id="groupPRNT">
+            <label for="prnt">PRNT Real (%):</label>
+            <input type="number" id="prnt" value="80" step="0.1" class="form-control">
+        </div>
+
+        <button onclick="calcular()">Calcular Manualmente</button>
+
+        <div class="loading" id="loading">Processando...</div>
+        <div class="result" id="resultado"></div>
+
+        <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+
+        <div class="form-group">
+            <label>Importar Laudo (PDF)</label>
+            <input type="file" id="pdf" accept="application/pdf">
+        </div>
+        <button class="btn-pdf" onclick="enviarPDF()">Calcular via PDF</button>
+        
+        <button id="btn-imprimir" class="btn-print" onclick="imprimirRelatorio()">
+            Gerar Relatório para Impressão
+        </button>
+    </div>
+
+    <div id="print-area">
+        <div class="print-header">
+            <h1>Relatório Técnico de Calagem</h1>
+            <p>AgroCalc - Assistência Técnica Agronômica</p>
+        </div>
+        <div id="print-content"></div>
+        <div class="print-footer">
+            <p>Documento gerado em: <span id="print-date"></span></p>
+            <p><br><br>__________________________________________<br>Responsável Técnico</p>
+        </div>
+    </div>
+
+    <script>
+
+    function atualizarPRNT() {
+        const select = document.getElementById('tipoCalcario');
+        const input = document.getElementById('prnt');
+        if (select.value !== 'custom') {
+            input.value = select.value;
+        }
+    }
+
+    let dadosMemoria = {
+        ca: 0, mg: 0, k: 0, hAl: 0, prnt: 100, cultura: 'soja',
+        sb: 0, t: 0, v1: 0, nc: 0
+    };
+
+    async function calcular() {
+        const loading = document.getElementById("loading");
+        const tipoSelect = document.getElementById('tipoCalcario');
+        const tipoTexto = tipoSelect.options[tipoSelect.selectedIndex].text;
+        const inputs = {
+            ca: parseFloat(document.getElementById("ca").value) || 0,
+            mg: parseFloat(document.getElementById("mg").value) || 0,
+            k: parseFloat(document.getElementById("k").value) || 0,
+            hAl: parseFloat(document.getElementById("hAl").value) || 0,
+            prnt: parseFloat(document.getElementById("prnt").value) || 100,
+            cultura: document.getElementById("cultura").value,
+            tipoCalcario: tipoTexto
+        };
+
+        loading.style.display = "block";
+        try {
+            const res = await fetch("/calagem", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(inputs)
+            });
+            const r = await res.json();
+            
+            
+            dadosMemoria = { ...inputs, ...r };
+            exibirResultado(r, "Cálculo Manual");
+        } catch (e) {
+            console.error(e);
+            alert("Erro ao conectar com o servidor.");
+        } finally {
+            loading.style.display = "none";
+        }
+    }
+
+async function enviarPDF() {
+    const loading = document.getElementById("loading");
+    const fileInput = document.getElementById("pdf");
+    const file = fileInput.files[0];
+    
+    if (!file) return alert("Selecione um PDF!");
+
+
+    const prntVal = parseFloat(document.getElementById("prnt").value) || 100;
+    const cultVal = document.getElementById("cultura").value;
+    const tipoSelect = document.getElementById('tipoCalcario');
+    const tipoTexto = tipoSelect.options[tipoSelect.selectedIndex].text;
+
+    loading.style.display = "block";
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("prnt", prntVal);
+    formData.append("cultura", cultVal);
+    formData.append("tipoCalcario", tipoTexto); 
+
+    try {
+        const res = await fetch("/calagem/pdf", { method: "POST", body: formData });
+        if (!res.ok) throw new Error("Erro no servidor");
+        const r = await res.json();
+        
+        
+        document.getElementById("ca").value = r.ca || 0;
+        document.getElementById("mg").value = r.mg || 0;
+        document.getElementById("k").value = r.k || 0;
+        document.getElementById("hAl").value = r.hAl || 0;
+
+    
+        dadosMemoria = { 
+            ca: r.ca || 0, 
+            mg: r.mg || 0, 
+            k: r.k || 0, 
+            hAl: r.hAl || 0, 
+            prnt: prntVal, 
+            cultura: cultVal, 
+            tipoCalcario: tipoTexto,
+            ...r 
+        };
+
+        exibirResultado(r, "Extraído via PDF");
+    } catch (e) {
+        console.error(e);
+        alert("Erro ao processar PDF. Verifique a conexão com o servidor.");
+    } finally {
+        loading.style.display = "none";
+    }
+}
+
+    function exibirResultado(r, titulo) {
+        const div = document.getElementById("resultado");
+        const btn = document.getElementById("btn-imprimir");
+
+        div.innerHTML = `
+            <strong>${titulo}</strong><br>
+            SB: ${(r.sb || 0).toFixed(2)} | CTC: ${(r.t || 0).toFixed(2)}<br>
+            V1: ${(r.v1 || 0).toFixed(2)}% | <b>NC: ${(r.nc || 0).toFixed(2)} t/ha</b>
+        `;
+        div.style.display = "block";
+        btn.style.display = "block";
+    }
+
+    function imprimirRelatorio() {
+        if (!dadosMemoria || (dadosMemoria.nc === undefined)) {
+            alert("Nenhum dado encontrado para impressão.");
+            return;
+        }
+
+        document.getElementById("print-date").innerText = new Date().toLocaleString('pt-BR');
+        
+        
+        const htmlRelatorio = `
+            <h3>Dados de Entrada (Cultura: ${dadosMemoria.cultura.toUpperCase()})</h3>
+            <table>
+                <tr><th>Cálcio (Ca)</th><td>${(dadosMemoria.ca || 0).toFixed(2)} cmolc/dm³</td></tr>
+                <tr><th>Magnésio (Mg)</th><td>${(dadosMemoria.mg || 0).toFixed(2)} cmolc/dm³</td></tr>
+                <tr><th>Potássio (K)</th><td>${(dadosMemoria.k || 0).toFixed(2)} cmolc/dm³</td></tr>
+                <tr><th>H + Al</th><td>${(dadosMemoria.hAl || 0).toFixed(2)} cmolc/dm³</td></tr>
+                <tr><th>PRNT</th><td>${(dadosMemoria.prnt || 100)}%</td></tr>
+            </table>
+
+            <h3>Resultados e Recomendação</h3>
+            <table>
+                <tr><td>Soma de Bases (SB)</td><td><b>${(dadosMemoria.sb || 0).toFixed(2)} cmolc/dm³</b></td></tr>
+                <tr><td>CTC Total (T)</td><td><b>${(dadosMemoria.t || 0).toFixed(2)} cmolc/dm³</b></td></tr>
+                <tr><td>Saturação Atual (V1)</td><td><b>${(dadosMemoria.v1 || 0).toFixed(2)}%</b></td></tr>
+                <tr><td>Tipo de Calcário</td><td>${dadosMemoria.tipoCalcario}</td></tr>
+                <tr><td>Eficiência (PRNT)</td><td>${dadosMemoria.prnt}%</td></tr>
+                <tr style="background:#e8f5e9;">
+                    <td><b>NECESSIDADE DE CALAGEM</b></td>
+                    <td><b>${(dadosMemoria.nc || 0).toFixed(2)} t/ha</b></td>
+                </tr>
+            </table>
+        `;
+
+        document.getElementById("print-content").innerHTML = htmlRelatorio;
+        
+        setTimeout(() => {
+            window.print();
+        }, 250);
+    }
+</script>
+</body>
+</html>
