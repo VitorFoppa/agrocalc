@@ -10,6 +10,7 @@ Funcionalidades:
     - Suporte a Múltiplas Culturas: Configurações pré-definidas de Saturação Desejada ($V_2$) para Soja, Milho, Café, Trigo e Pastagens.
     - Relatório de Impressão: Gera um laudo técnico formatado pronto para ser entregue ao cliente.
     - Seleção de Corretivos: Interface para escolha de diferentes tipos de calcário (Calcítico, Magnesiano, Dolomítico) e seus respectivos PRNTs.
+    - API REST documentada com Swagger/OpenAPI
 
 
 Tecnologias Utilizadas:
@@ -18,6 +19,19 @@ Tecnologias Utilizadas:
     - Frontend: HTML5, CSS3, JavaScript (Vanilla).
     - Processamento de PDF: Apache PDFBox.
     - Gerenciamento de Dependências: Maven.
+    - Documentação da API: Swagger / OpenAPI
+    - Testes: JUnit 5
+
+
+O projeto possui testes unitários desenvolvidos com JUnit 5 para validação das regras de negócio da calagem.
+
+Cobertura dos principais cenários:
+
+- Cálculo correto da Necessidade de Calagem (NC)
+- Cenários onde não há necessidade de aplicação de calcário
+- Tratamento de valores limite (T = 0)
+- Validação das fórmulas agronômicas implementadas
+
 
 
 Estrutura do Projeto:
