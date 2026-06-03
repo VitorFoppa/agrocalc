@@ -213,6 +213,8 @@
 
     <script>
 
+    const API_URL = "http://localhost:8080";
+
     function atualizarPRNT() {
         const select = document.getElementById('tipoCalcario');
         const input = document.getElementById('prnt');
@@ -241,8 +243,9 @@
         };
 
         loading.style.display = "block";
+
         try {
-            const res = await fetch("/calagem", {
+            const res = await fetch(`${API_URL}/calagem`, {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify(inputs)
@@ -281,7 +284,7 @@ async function enviarPDF() {
     formData.append("tipoCalcario", tipoTexto); 
 
     try {
-        const res = await fetch("/calagem/pdf", { method: "POST", body: formData });
+        const res = await fetch(`${API_URL}/calagem/pdf`, { method: "POST", body: formData });
         if (!res.ok) throw new Error("Erro no servidor");
         const r = await res.json();
         
