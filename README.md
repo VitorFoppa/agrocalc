@@ -1,79 +1,36 @@
-# AgroCalc - Recomendacao de Calagem
+##AgroCalc
+Aplicação web para recomendação técnica de calagem do solo, desenvolvida com Java 21 e Spring Boot 3. O sistema calcula a Necessidade de Calagem (NC) a partir de dados de análise de solo inseridos manualmente ou extraídos automaticamente de laudos laboratoriais em PDF.
+Acesse: agrocalc-sx77.onrender.com
 
-O AgroCalc e uma ferramenta desenvolvida em Java e Spring Boot para auxiliar engenheiros agronomos e produtores no calculo da Necessidade de Calagem (NC). O sistema permite tanto a entrada manual de dados quanto a extracao automatizada de informacoes a partir de laudos laboratoriais em PDF.
+##Funcionalidades
 
-
-## Funcionalidades
-
-- Calculo de Calagem Automatizado: Calcula Soma de Bases (SB), CTC (T), Saturacao por Bases Atual (V1) e a Recomendacao Final (NC).
-- Extracao Inteligente de PDF: Motor de busca via Regex que ignora ruidos comuns em laudos (simbolos de LaTeX, cifroes, aspas e quebras de linha).
-- Suporte a Multiplas Culturas: Configuracoes pre-definidas de Saturacao Desejada (V2) para Soja, Milho, Cafe, Trigo e Pastagens.
-- Relatorio de Impressao: Gera um laudo tecnico formatado pronto para ser entregue ao cliente.
-- Selecao de Corretivos: Interface para escolha de diferentes tipos de calcario (Calcítico, Magnesiano, Dolomitico) e seus respectivos PRNTs.
-- API REST documentada com Swagger/OpenAPI.
-- Publicacao de eventos de calagem via Apache Kafka.
-
-
-## Tecnologias Utilizadas
-
-- Backend: Java 21, Spring Boot 3.
-- Frontend: HTML5, CSS3, JavaScript (Vanilla).
-- Processamento de PDF: Apache PDFBox.
-- Mensageria: Apache Kafka (KRaft, sem Zookeeper).
-- Conteinizacao: Docker e Docker Compose.
-- Gerenciamento de Dependencias: Maven.
-- Documentacao da API: Swagger / OpenAPI.
-- Testes: JUnit 5.
+Cálculo automatizado de calagem: Determina Soma de Bases (SB), CTC (T), Saturação por Bases Atual (V1) e a Necessidade de Calagem (NC).
+Extração inteligente de PDF: Motor baseado em Regex que filtra ruídos comuns em laudos laboratoriais (símbolos LaTeX, cifrões, aspas, quebras de linha).
+Suporte a múltiplas culturas: Configurações pré-definidas de Saturação Desejada (V2) para Soja, Milho, Café, Trigo e Pastagens.
+Seleção de corretivos: Suporte a diferentes tipos de calcário (Calcítico, Magnesiano, Dolomítico) com seus respectivos PRNTs.
+Relatório de impressão: Laudo técnico formatado pronto para entrega ao cliente.
+API REST documentada com Swagger/OpenAPI.
+Publicação de eventos via Apache Kafka.
 
 
-## Kafka
+##Tecnologias
+CamadaTecnologiaBackendJava 21, Spring Boot 3FrontendHTML5, CSS3, JavaScript (Vanilla)Processamento de PDFApache PDFBoxMensageriaApache Kafka (KRaft, sem Zookeeper)ConteinerizaçãoDocker, Docker ComposeGerenciamento de dependênciasMavenDocumentação da APISwagger / OpenAPITestesJUnit 5
 
-Apos cada calculo de calagem, o sistema publica automaticamente um evento no topico `calagem-resultado` com os dados do solo e o resultado calculado.
-
-Exemplo de mensagem publicada:
-
-```json
-{
-  "cultura": "soja",
-  "tipoCalcario": "calcario",
-  "prnt": 80.0,
-  "resultado": {
-    "sb": 3.8,
-    "t": 8.3,
-    "v1": 45.78,
-    "nc": 1.48
-  }
-}
-```
-
-
-## Executando com Docker
-
-Pre-requisitos: Docker e Docker Compose instalados.
-
-Suba a aplicacao e o Kafka com um unico comando:
-
-```bash
-docker compose up --build
-```
-
-A API estara disponivel em `http://localhost:8080`.
-
+##Executando com Docker
+Pré-requisitos: Docker e Docker Compose instalados.
+Suba a aplicação e o Kafka com um único comando:
+bashdocker compose up --build
+A API estará disponível em http://localhost:8080.
 Para consumir as mensagens do Kafka em tempo real:
-
-```bash
-docker exec -it agrocalc-kafka-1 \
+bashdocker exec -it agrocalc-kafka-1 \
   kafka-console-consumer \
   --bootstrap-server localhost:9092 \
   --topic calagem-resultado \
   --from-beginning
-```
 
-
-## Exemplo de Uso
-
-```bash
-curl -X POST http://localhost:8080/calagem \
+##Exemplo de Uso
+Requisição:
+bashcurl -X POST http://localhost:8080/calagem \
   -H "Content-Type: application/json" \
   -d '{
     "ca": 2.5,
@@ -84,38 +41,42 @@ curl -X POST http://localhost:8080/calagem \
     "tipoCalcario": "calcario",
     "cultura": "soja"
   }'
-```
+Evento publicado no tópico calagem-resultado:
+json{
+  "cultura": "soja",
+  "tipoCalcario": "calcario",
+  "prnt": 80.0,
+  "resultado": {
+    "sb": 3.8,
+    "t": 8.3,
+    "v1": 45.78,
+    "nc": 1.48
+  }
+}
 
+##Testes
+Os testes unitários cobrem as principais regras de negócio do domínio de calagem:
 
-## Testes
+Cálculo correto da Necessidade de Calagem (NC)
+Cenários onde não há necessidade de aplicação de calcário
+Tratamento de valores limite (T = 0)
+Validação das fórmulas agronômicas implementadas
 
-O projeto possui testes unitarios desenvolvidos com JUnit 5 para validacao das regras de negocio da calagem.
+Para executar:
+bashmvn test
 
-Cobertura dos principais cenarios:
-
-- Calculo correto da Necessidade de Calagem (NC).
-- Cenarios onde nao ha necessidade de aplicacao de calcario.
-- Tratamento de valores limite (T = 0).
-- Validacao das formulas agronomicas implementadas.
-
-Para executar os testes:
-
-```bash
-mvn test
-```
-
-
-## Estrutura do Projeto
-
-```
+##Estrutura do Projeto
 src/main/java/com/agrocalc/
 ├── controller/       # Endpoints da API (Manual e PDF)
-├── producer/         # Publicacao de eventos no Kafka
-├── dto/              # Objetos de transferencia de dados (eventos Kafka)
-├── config/           # Configuracao do Kafka
+├── producer/         # Publicação de eventos no Kafka
+├── dto/              # Objetos de transferência de dados (eventos Kafka)
+├── config/           # Configuração do Kafka
 ├── model/            # Classes de dados (Solo e Resultado)
-├── service/          # Logica de calculo e extracao (Parser)
+├── service/          # Lógica de cálculo e extração (Parser)
 └── AgroCalcApplication.java
+
 src/main/resources/
 └── static/           # Frontend (index.html)
-```
+
+##Deploy
+A aplicação é hospedada na plataforma Render via Docker, com deploy contínuo integrado ao GitHub. O ambiente de produção utiliza apenas a API REST — o Kafka está disponível exclusivamente no ambiente local para simplificar a infraestrutura e reduzir custos operacionais.
